@@ -5004,7 +5004,7 @@
     <!-- Main Diagram -->
     <div class="diagram-container" data-detail-level="read"
          data-preset-badge-editorial-plate="ARCHIFY / 图版 04">
-      <svg viewBox="0 0 840 532" role="img" lang="zh-CN" aria-labelledby="archify-diagram-title archify-diagram-description" data-preset="classic" data-quality-profile="showcase">
+      <svg viewBox="0 0 1150 532" role="img" lang="zh-CN" aria-labelledby="archify-diagram-title archify-diagram-description" data-preset="classic" data-quality-profile="showcase">
         <title id="archify-diagram-title">網路影片下載：運作方式</title>
         <desc id="archify-diagram-description">由 Archify 生成的架构图。</desc>
         <!-- Definitions -->
@@ -5033,144 +5033,141 @@
 
 
         <!-- Connection paths (before components for correct z-order) -->
-        <path data-edge-from="page" data-edge-to="ext" data-edge-label="播放時載入" data-edge-key="0" data-edge-id="page-to-ext" data-composition-points="130,124;130,230" d="M 130 124 L 130 230" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="ext" data-edge-to="server" data-edge-label="POST 網址" data-edge-key="1" data-edge-id="ext-to-server" data-composition-points="220,262;330,262" d="M 220 262 L 330 262" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="server" data-edge-to="ytdlp" data-edge-label="排隊執行" data-edge-key="2" data-edge-id="server-to-ytdlp" data-composition-points="510,262;620,262" d="M 510 262 L 620 262" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="ytdlp" data-edge-to="downloads" data-edge-label="存成 mp4" data-edge-key="3" data-edge-id="ytdlp-to-downloads" data-composition-points="710,230;710,124" d="M 710 230 L 710 124" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="server" data-edge-to="jobs" data-edge-label="寫入紀錄" data-edge-key="4" data-edge-id="server-to-jobs" data-composition-points="420,230;420,124" d="M 420 230 L 420 124" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="ytdlp" data-edge-to="tmp" data-edge-label="暫存" data-edge-key="5" data-edge-id="ytdlp-to-tmp" data-composition-points="710,294;710,400" d="M 710 294 L 710 400" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="server" data-edge-to="popup" data-edge-label="進度 / 狀態" data-edge-key="6" data-edge-id="server-to-popup" data-composition-points="420,294;420,400" d="M 420 294 L 420 400" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="page" data-edge-to="ext" data-edge-label="播放" data-edge-key="0" data-edge-id="page-to-ext" data-composition-points="210,262;280,262" d="M 210 262 L 280 262" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="ext" data-edge-to="server" data-edge-label="POST" data-edge-key="1" data-edge-id="ext-to-server" data-composition-points="430,262;500,262" d="M 430 262 L 500 262" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="server" data-edge-to="ytdlp" data-edge-label="排隊" data-edge-key="2" data-edge-id="server-to-ytdlp" data-composition-points="650,262;720,262" d="M 650 262 L 720 262" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="ytdlp" data-edge-to="downloads" data-edge-label="存檔" data-edge-key="3" data-edge-id="ytdlp-to-downloads" data-composition-points="870,262;940,262" d="M 870 262 L 940 262" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="server" data-edge-to="jobs" data-edge-label="紀錄" data-edge-key="4" data-edge-id="server-to-jobs" data-composition-points="575,230;575,124" d="M 575 230 L 575 124" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="server" data-edge-to="popup" data-edge-label="進度" data-edge-key="5" data-edge-id="server-to-popup" data-composition-points="575,294;575,400" d="M 575 294 L 575 400" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="ytdlp" data-edge-to="tmp" data-edge-label="暫存" data-edge-key="6" data-edge-id="ytdlp-to-tmp" data-composition-points="795,294;795,400" d="M 795 294 L 795 400" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
 
         <!-- Components -->
-        <g id="node-page" data-node-id="page" data-node-label="Chrome 分頁" tabindex="0" role="button" aria-label="聚焦Chrome 分頁，影片網頁・按下播放, 架构组件" aria-pressed="false" data-node-kind="external" data-node-sublabel="影片網頁・按下播放" data-node-context="架构组件">
-          <title>Chrome 分頁 · 影片網頁・按下播放 · 架构组件</title>
-          <rect x="40" y="60" width="180" height="64" rx="6" class="c-mask"/>
-          <rect x="40" y="60" width="180" height="64" rx="6" class="c-external" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(46 66) scale(0.6875)">
+        <g id="node-page" data-node-id="page" data-node-label="起點｜Chrome 分頁" tabindex="0" role="button" aria-label="聚焦起點｜Chrome 分頁，按下播放的影片網頁, 架构组件" aria-pressed="false" data-node-kind="external" data-node-sublabel="按下播放的影片網頁" data-node-context="架构组件">
+          <title>起點｜Chrome 分頁 · 按下播放的影片網頁 · 架构组件</title>
+          <rect x="40" y="230" width="170" height="64" rx="6" class="c-mask"/>
+          <rect x="40" y="230" width="170" height="64" rx="6" class="c-external" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(46 236) scale(0.6875)">
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="130" y="90" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Chrome 分頁</text>
-        <text data-detail="context" x="130" y="106" class="t-muted" font-size="9" text-anchor="middle">影片網頁・按下播放</text>
+          <text data-node-label="" data-detail-anchor="" x="125" y="260" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">起點｜Chrome 分頁</text>
+        <text data-detail="context" x="125" y="276" class="t-muted" font-size="9" text-anchor="middle">按下播放的影片網頁</text>
+        </g>
+
+        <g id="node-ext" data-node-id="ext" data-node-label="② Chrome 外掛" tabindex="0" role="button" aria-label="聚焦② Chrome 外掛，偵測影片來源, 架构组件" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="偵測影片來源" data-node-context="架构组件">
+          <title>② Chrome 外掛 · 偵測影片來源 · 架构组件</title>
+          <rect x="280" y="230" width="150" height="64" rx="6" class="c-mask"/>
+          <rect x="280" y="230" width="150" height="64" rx="6" class="c-frontend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(286 236) scale(0.6875)">
+            <rect x="2" y="3" width="12" height="10" rx="2"/>
+            <path d="M2 6.5h12"/>
+            <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
+            <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="355" y="260" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">② Chrome 外掛</text>
+        <text data-detail="context" x="355" y="276" class="t-muted" font-size="9" text-anchor="middle">偵測影片來源</text>
+        </g>
+
+        <g id="node-server" data-node-id="server" data-node-label="③ 本機服務" tabindex="0" role="button" aria-label="聚焦③ 本機服務，排隊・最多同時 2 個, 架构组件" aria-pressed="false" data-node-kind="backend" data-node-sublabel="排隊・最多同時 2 個" data-node-context="架构组件">
+          <title>③ 本機服務 · 排隊・最多同時 2 個 · 架构组件</title>
+          <rect x="500" y="230" width="150" height="64" rx="6" class="c-mask"/>
+          <rect x="500" y="230" width="150" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(506 236) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="575" y="260" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">③ 本機服務</text>
+        <text data-detail="context" x="575" y="276" class="t-muted" font-size="9" text-anchor="middle">排隊・最多同時 2 個</text>
+        </g>
+
+        <g id="node-ytdlp" data-node-id="ytdlp" data-node-label="④ yt-dlp + ffmpeg" tabindex="0" role="button" aria-label="聚焦④ yt-dlp + ffmpeg，下載並合併 mp4, 架构组件" aria-pressed="false" data-node-kind="backend" data-node-sublabel="下載並合併 mp4" data-node-context="架构组件">
+          <title>④ yt-dlp + ffmpeg · 下載並合併 mp4 · 架构组件</title>
+          <rect x="720" y="230" width="150" height="64" rx="6" class="c-mask"/>
+          <rect x="720" y="230" width="150" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(726 236) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="795" y="260" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">④ yt-dlp + ffmpeg</text>
+        <text data-detail="context" x="795" y="276" class="t-muted" font-size="9" text-anchor="middle">下載並合併 mp4</text>
+        </g>
+
+        <g id="node-downloads" data-node-id="downloads" data-node-label="終點｜下載資料夾" tabindex="0" role="button" aria-label="聚焦終點｜下載資料夾，Windows 下載, 架构组件" aria-pressed="false" data-node-kind="external" data-node-sublabel="Windows 下載" data-node-context="架构组件">
+          <title>終點｜下載資料夾 · Windows 下載 · 架构组件</title>
+          <rect x="940" y="230" width="170" height="64" rx="6" class="c-mask"/>
+          <rect x="940" y="230" width="170" height="64" rx="6" class="c-external" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(946 236) scale(0.6875)">
+            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
+            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="1025" y="260" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">終點｜下載資料夾</text>
+        <text data-detail="context" x="1025" y="276" class="t-muted" font-size="9" text-anchor="middle">Windows 下載</text>
         </g>
 
         <g id="node-jobs" data-node-id="jobs" data-node-label="jobs.json" tabindex="0" role="button" aria-label="聚焦jobs.json，下載清單紀錄, 架构组件" aria-pressed="false" data-node-kind="database" data-node-sublabel="下載清單紀錄" data-node-context="架构组件">
           <title>jobs.json · 下載清單紀錄 · 架构组件</title>
-          <rect x="330" y="60" width="180" height="64" rx="6" class="c-mask"/>
-          <rect x="330" y="60" width="180" height="64" rx="6" class="c-database" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(336 66) scale(0.6875)">
+          <rect x="500" y="60" width="150" height="64" rx="6" class="c-mask"/>
+          <rect x="500" y="60" width="150" height="64" rx="6" class="c-database" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(506 66) scale(0.6875)">
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="420" y="90" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">jobs.json</text>
-        <text data-detail="context" x="420" y="106" class="t-muted" font-size="9" text-anchor="middle">下載清單紀錄</text>
+          <text data-node-label="" data-detail-anchor="" x="575" y="90" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">jobs.json</text>
+        <text data-detail="context" x="575" y="106" class="t-muted" font-size="9" text-anchor="middle">下載清單紀錄</text>
         </g>
 
-        <g id="node-downloads" data-node-id="downloads" data-node-label="下載資料夾" tabindex="0" role="button" aria-label="聚焦下載資料夾，Windows Downloads, 架构组件" aria-pressed="false" data-node-kind="external" data-node-sublabel="Windows Downloads" data-node-tag="最終 mp4" data-node-context="架构组件">
-          <title>下載資料夾 · Windows Downloads · 架构组件 · 最終 mp4</title>
-          <rect x="620" y="60" width="180" height="64" rx="6" class="c-mask"/>
-          <rect x="620" y="60" width="180" height="64" rx="6" class="c-external" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(626 66) scale(0.6875)">
-            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
-            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="710" y="90" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">下載資料夾</text>
-        <text data-detail="context" x="710" y="106" class="t-muted" font-size="9" text-anchor="middle">Windows Downloads</text>
-        <text data-detail="fine" x="710" y="116" class="t-external" font-size="7" text-anchor="middle">最終 mp4</text>
-        </g>
-
-        <g id="node-ext" data-node-id="ext" data-node-label="Chrome 外掛" tabindex="0" role="button" aria-label="聚焦Chrome 外掛，偵測 Vimeo / m3u8 / 檔案, 架构组件" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="偵測 Vimeo / m3u8 / 檔案" data-node-tag="Manifest V3" data-node-context="架构组件">
-          <title>Chrome 外掛 · 偵測 Vimeo / m3u8 / 檔案 · 架构组件 · Manifest V3</title>
-          <rect x="40" y="230" width="180" height="64" rx="6" class="c-mask"/>
-          <rect x="40" y="230" width="180" height="64" rx="6" class="c-frontend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(46 236) scale(0.6875)">
+        <g id="node-popup" data-node-id="popup" data-node-label="彈出視窗" tabindex="0" role="button" aria-label="聚焦彈出視窗，進度與下載清單, 架构组件" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="進度與下載清單" data-node-context="架构组件">
+          <title>彈出視窗 · 進度與下載清單 · 架构组件</title>
+          <rect x="500" y="400" width="150" height="64" rx="6" class="c-mask"/>
+          <rect x="500" y="400" width="150" height="64" rx="6" class="c-frontend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(506 406) scale(0.6875)">
             <rect x="2" y="3" width="12" height="10" rx="2"/>
             <path d="M2 6.5h12"/>
             <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
             <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="130" y="260" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Chrome 外掛</text>
-        <text data-detail="context" x="130" y="276" class="t-muted" font-size="9" text-anchor="middle">偵測 Vimeo / m3u8 / 檔案</text>
-        <text data-detail="fine" x="130" y="286" class="t-frontend" font-size="7" text-anchor="middle">Manifest V3</text>
+          <text data-node-label="" data-detail-anchor="" x="575" y="430" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">彈出視窗</text>
+        <text data-detail="context" x="575" y="446" class="t-muted" font-size="9" text-anchor="middle">進度與下載清單</text>
         </g>
 
-        <g id="node-server" data-node-id="server" data-node-label="本機服務" tabindex="0" role="button" aria-label="聚焦本機服務，server.py・排隊最多 2 個, 架构组件" aria-pressed="false" data-node-kind="backend" data-node-sublabel="server.py・排隊最多 2 個" data-node-tag="127.0.0.1:18765" data-node-context="架构组件">
-          <title>本機服務 · server.py・排隊最多 2 個 · 架构组件 · 127.0.0.1:18765</title>
-          <rect x="330" y="230" width="180" height="64" rx="6" class="c-mask"/>
-          <rect x="330" y="230" width="180" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(336 236) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="420" y="260" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">本機服務</text>
-        <text data-detail="context" x="420" y="276" class="t-muted" font-size="9" text-anchor="middle">server.py・排隊最多 2 個</text>
-        <text data-detail="fine" x="420" y="286" class="t-backend" font-size="7" text-anchor="middle">127.0.0.1:18765</text>
-        </g>
-
-        <g id="node-ytdlp" data-node-id="ytdlp" data-node-label="yt-dlp + ffmpeg" tabindex="0" role="button" aria-label="聚焦yt-dlp + ffmpeg，下載並合併成 mp4, 架构组件" aria-pressed="false" data-node-kind="backend" data-node-sublabel="下載並合併成 mp4" data-node-context="架构组件">
-          <title>yt-dlp + ffmpeg · 下載並合併成 mp4 · 架构组件</title>
-          <rect x="620" y="230" width="180" height="64" rx="6" class="c-mask"/>
-          <rect x="620" y="230" width="180" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(626 236) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="710" y="260" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">yt-dlp + ffmpeg</text>
-        <text data-detail="context" x="710" y="276" class="t-muted" font-size="9" text-anchor="middle">下載並合併成 mp4</text>
-        </g>
-
-        <g id="node-popup" data-node-id="popup" data-node-label="彈出視窗" tabindex="0" role="button" aria-label="聚焦彈出視窗，本頁影片 + 下載清單, 架构组件" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="本頁影片 + 下載清單" data-node-context="架构组件">
-          <title>彈出視窗 · 本頁影片 + 下載清單 · 架构组件</title>
-          <rect x="330" y="400" width="180" height="64" rx="6" class="c-mask"/>
-          <rect x="330" y="400" width="180" height="64" rx="6" class="c-frontend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(336 406) scale(0.6875)">
-            <rect x="2" y="3" width="12" height="10" rx="2"/>
-            <path d="M2 6.5h12"/>
-            <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
-            <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="420" y="430" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">彈出視窗</text>
-        <text data-detail="context" x="420" y="446" class="t-muted" font-size="9" text-anchor="middle">本頁影片 + 下載清單</text>
-        </g>
-
-        <g id="node-tmp" data-node-id="tmp" data-node-label=".tmp" tabindex="0" role="button" aria-label="聚焦.tmp，暫存分片，完成後清掉, 架构组件" aria-pressed="false" data-node-kind="database" data-node-sublabel="暫存分片，完成後清掉" data-node-context="架构组件">
-          <title>.tmp · 暫存分片，完成後清掉 · 架构组件</title>
-          <rect x="620" y="400" width="180" height="64" rx="6" class="c-mask"/>
-          <rect x="620" y="400" width="180" height="64" rx="6" class="c-database" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(626 406) scale(0.6875)">
+        <g id="node-tmp" data-node-id="tmp" data-node-label=".tmp" tabindex="0" role="button" aria-label="聚焦.tmp，暫存・完成後清掉, 架构组件" aria-pressed="false" data-node-kind="database" data-node-sublabel="暫存・完成後清掉" data-node-context="架构组件">
+          <title>.tmp · 暫存・完成後清掉 · 架构组件</title>
+          <rect x="720" y="400" width="150" height="64" rx="6" class="c-mask"/>
+          <rect x="720" y="400" width="150" height="64" rx="6" class="c-database" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(726 406) scale(0.6875)">
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="710" y="430" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">.tmp</text>
-        <text data-detail="context" x="710" y="446" class="t-muted" font-size="9" text-anchor="middle">暫存分片，完成後清掉</text>
+          <text data-node-label="" data-detail-anchor="" x="795" y="430" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">.tmp</text>
+        <text data-detail="context" x="795" y="446" class="t-muted" font-size="9" text-anchor="middle">暫存・完成後清掉</text>
         </g>
 
         <!-- Connection labels -->
-        <g data-detail="context" data-edge-from="page" data-edge-to="ext" data-edge-label="播放時載入" data-edge-key="0" data-edge-id="page-to-ext">
-          <rect x="101" y="128" width="58" height="14" rx="3" class="c-mask"/>
-          <text x="130" y="138" class="t-backend" font-size="8" text-anchor="middle">播放時載入</text>
+        <g data-detail="context" data-edge-from="page" data-edge-to="ext" data-edge-label="播放" data-edge-key="0" data-edge-id="page-to-ext">
+          <rect x="230" y="242" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="245" y="252" class="t-backend" font-size="8" text-anchor="middle">播放</text>
         </g>
-        <g data-detail="context" data-edge-from="ext" data-edge-to="server" data-edge-label="POST 網址" data-edge-key="1" data-edge-id="ext-to-server">
-          <rect x="248.4" y="242" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
-          <text x="275" y="252" class="t-backend" font-size="8" text-anchor="middle">POST 網址</text>
+        <g data-detail="context" data-edge-from="ext" data-edge-to="server" data-edge-label="POST" data-edge-key="1" data-edge-id="ext-to-server">
+          <rect x="450" y="242" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="465" y="252" class="t-backend" font-size="8" text-anchor="middle">POST</text>
         </g>
-        <g data-detail="context" data-edge-from="server" data-edge-to="ytdlp" data-edge-label="排隊執行" data-edge-key="2" data-edge-id="server-to-ytdlp">
-          <rect x="540.8" y="242" width="48.4" height="14" rx="3" class="c-mask"/>
-          <text x="565" y="252" class="t-muted" font-size="8" text-anchor="middle">排隊執行</text>
+        <g data-detail="context" data-edge-from="server" data-edge-to="ytdlp" data-edge-label="排隊" data-edge-key="2" data-edge-id="server-to-ytdlp">
+          <rect x="670" y="242" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="685" y="252" class="t-backend" font-size="8" text-anchor="middle">排隊</text>
         </g>
-        <g data-detail="context" data-edge-from="ytdlp" data-edge-to="downloads" data-edge-label="存成 mp4" data-edge-key="3" data-edge-id="ytdlp-to-downloads">
-          <rect x="685.8" y="210" width="48.4" height="14" rx="3" class="c-mask"/>
-          <text x="710" y="220" class="t-backend" font-size="8" text-anchor="middle">存成 mp4</text>
+        <g data-detail="context" data-edge-from="ytdlp" data-edge-to="downloads" data-edge-label="存檔" data-edge-key="3" data-edge-id="ytdlp-to-downloads">
+          <rect x="890" y="242" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="905" y="252" class="t-backend" font-size="8" text-anchor="middle">存檔</text>
         </g>
-        <g data-detail="context" data-edge-from="server" data-edge-to="jobs" data-edge-label="寫入紀錄" data-edge-key="4" data-edge-id="server-to-jobs">
-          <rect x="395.8" y="210" width="48.4" height="14" rx="3" class="c-mask"/>
-          <text x="420" y="220" class="t-messagebus" font-size="8" text-anchor="middle">寫入紀錄</text>
+        <g data-detail="context" data-edge-from="server" data-edge-to="jobs" data-edge-label="紀錄" data-edge-key="4" data-edge-id="server-to-jobs">
+          <rect x="560" y="210" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="575" y="220" class="t-messagebus" font-size="8" text-anchor="middle">紀錄</text>
         </g>
-        <g data-detail="context" data-edge-from="ytdlp" data-edge-to="tmp" data-edge-label="暫存" data-edge-key="5" data-edge-id="ytdlp-to-tmp">
-          <rect x="695" y="298" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="710" y="308" class="t-messagebus" font-size="8" text-anchor="middle">暫存</text>
+        <g data-detail="context" data-edge-from="server" data-edge-to="popup" data-edge-label="進度" data-edge-key="5" data-edge-id="server-to-popup">
+          <rect x="560" y="298" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="575" y="308" class="t-messagebus" font-size="8" text-anchor="middle">進度</text>
         </g>
-        <g data-detail="context" data-edge-from="server" data-edge-to="popup" data-edge-label="進度 / 狀態" data-edge-key="6" data-edge-id="server-to-popup">
-          <rect x="388.6" y="298" width="62.8" height="14" rx="3" class="c-mask"/>
-          <text x="420" y="308" class="t-messagebus" font-size="8" text-anchor="middle">進度 / 狀態</text>
+        <g data-detail="context" data-edge-from="ytdlp" data-edge-to="tmp" data-edge-label="暫存" data-edge-key="6" data-edge-id="ytdlp-to-tmp">
+          <rect x="780" y="298" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="795" y="308" class="t-messagebus" font-size="8" text-anchor="middle">暫存</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->
