@@ -26,16 +26,14 @@
 
 ## 運作方式
 
-```
- Chrome 分頁                       Chrome 外掛 (extension/)              本機服務 (server.py)
-┌──────────────┐  播放時載入       ┌──────────────────────┐   POST        ┌─────────────────────┐
-│ 影片網頁      │ ───────────────▶ │ 偵測 Vimeo 播放器 /   │ ───────────▶ │ 排隊 (最多同時 2 個)  │
-│ (按下播放鍵)  │  iframe / m3u8   │ m3u8 / 單一檔案       │  網址+Referer │ yt-dlp 下載 + ffmpeg │
-└──────────────┘                  │ 整理成「一個影片一項」 │ ◀─────────── │ 合併成 mp4           │
-                                  └──────────────────────┘   進度/狀態   └──────────┬──────────┘
-                                                                                    ▼
-                                                                       C:\Users\<你>\Downloads
-```
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/architecture-dark.png">
+    <img alt="運作方式：Chrome 分頁 → Chrome 外掛 → 本機服務 → yt-dlp + ffmpeg → 下載資料夾" src="docs/architecture-light.png" width="100%">
+  </picture>
+</p>
+
+> 想互動查看（縮放、搜尋、追蹤路徑）可下載 [`docs/architecture.html`](docs/architecture.html) 用瀏覽器開啟。圖的原始描述在 [`docs/architecture.json`](docs/architecture.json)，由 [archify](https://github.com/tt-a1i/archify) 產生。
 
 - **要先按播放才偵測得到**：多數網站的播放器是按了播放才載入影片，外掛是監聽瀏覽器實際發出的請求（和市面上的下載外掛原理相同）。
 - **為什麼要有本機服務**：現代網站的影片多是「切成很多小片段的串流」(HLS/DASH)，Chrome 本身無法合併。交給 yt-dlp 與 ffmpeg 處理，才能得到單一 mp4。
@@ -54,6 +52,7 @@
 ├─ download.py           命令列下載工具 (不經過外掛)
 ├─ sniff.py              獨立的「開瀏覽器等你按播放再抓」腳本 (備用方案)
 ├─ requirements.txt
+├─ docs/                 README 用的架構圖 (architecture.json / .html / 淺色與深色 .png)
 ├─ jobs.json             下載清單紀錄 (自動產生，已加入 .gitignore)
 ├─ .tmp/                 下載中的暫存檔 (自動產生，完成後清掉)
 └─ .venv/                Python 虛擬環境 (自行建立)

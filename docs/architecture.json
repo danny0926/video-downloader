@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "網路影片下載：運作方式",
+    "locale": "zh-CN",
+    "output": "architecture.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    { "id": "page", "type": "external", "label": "Chrome 分頁", "sublabel": "影片網頁・按下播放", "pos": [40, 300], "size": [150, 64] },
+    { "id": "ext", "type": "frontend", "label": "Chrome 外掛", "sublabel": "偵測 Vimeo / m3u8 / 檔案", "pos": [290, 300], "size": [170, 64], "tag": "Manifest V3" },
+    { "id": "server", "type": "backend", "label": "本機服務", "sublabel": "server.py・排隊最多 2 個", "pos": [570, 300], "size": [170, 64], "tag": "127.0.0.1:18765" },
+    { "id": "ytdlp", "type": "backend", "label": "yt-dlp + ffmpeg", "sublabel": "下載並合併成 mp4", "pos": [850, 300], "size": [160, 64] },
+    { "id": "downloads", "type": "external", "label": "下載資料夾", "sublabel": "Windows Downloads", "pos": [1110, 300], "size": [150, 64], "tag": "最終 mp4" },
+    { "id": "jobs", "type": "database", "label": "jobs.json", "sublabel": "下載清單紀錄", "pos": [570, 140], "size": [170, 64] },
+    { "id": "tmp", "type": "database", "label": ".tmp", "sublabel": "暫存分片，完成後清掉", "pos": [850, 460], "size": [160, 64] },
+    { "id": "popup", "type": "frontend", "label": "彈出視窗", "sublabel": "本頁影片 + 下載清單", "pos": [570, 460], "size": [170, 64] }
+  ],
+  "connections": [
+    { "id": "page-to-ext", "from": "page", "to": "ext", "label": "播放時載入", "variant": "emphasis" },
+    { "id": "ext-to-server", "from": "ext", "to": "server", "label": "POST 網址+Referer", "variant": "emphasis" },
+    { "id": "server-to-ytdlp", "from": "server", "to": "ytdlp", "label": "排隊執行" },
+    { "id": "ytdlp-to-downloads", "from": "ytdlp", "to": "downloads", "label": "存成 mp4", "variant": "emphasis" },
+    { "id": "server-to-jobs", "from": "server", "to": "jobs", "label": "寫入紀錄", "variant": "dashed", "fromSide": "top", "toSide": "bottom" },
+    { "id": "ytdlp-to-tmp", "from": "ytdlp", "to": "tmp", "label": "暫存", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "id": "server-to-popup", "from": "server", "to": "popup", "label": "進度 / 狀態", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelDy": 24 }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "先播放才偵測", "items": ["外掛監聽瀏覽器實際發出的請求", "一個影片只顯示一個下載項目"] },
+    { "dot": "emerald", "title": "為何要本機服務", "items": ["串流被切成小片段，Chrome 無法合併", "交給 yt-dlp 與 ffmpeg 才能得到單一 mp4"] },
+    { "dot": "amber", "title": "關掉視窗也會繼續", "items": ["下載在本機服務執行", "彈出視窗只負責顯示進度"] }
+  ]
+}
