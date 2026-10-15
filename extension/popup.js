@@ -29,7 +29,25 @@ function fileName(url) {
 }
 
 // ── 本頁偵測到的影片 ──────────────────────────────────────────
-function renderDetected(items) {
+function fmtDuration(sec) {
+  if (!sec) return "";
+  const s = Math.round(sec);
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
+  const p = (n) => String(n).padStart(2, "0");
+  return h ? `${h}:${p(m)}:${p(r)}` : `${m}:${p(r)}`;
+}
+
+// 同一支影片的串流通常有「總清單」+ 各畫質子清單：有總清單就只顯示總清單，沒有就只留一個
+function pickItems(items) {
+  const streams = items.filter((i) => i.kind === "stream");
+  const others = items.filter((i) => i.kind !== "stream");
+  const masters = streams.filter((i) => i.role === "master");
+  const shown = masters.length ? masters : streams.slice(0, 1);
+  return [...others, ...shown];
+}
+
+function renderDetected(allItems) {
+  const items = pickItems(allItems);
   listEl.innerHTML = "";
   if (!items.length) {
     listEl.innerHTML = '<div class="empty">還沒偵測到影片。<br>請先在頁面按下播放鍵，再回來看這裡。</div>';
@@ -40,7 +58,10 @@ function renderDetected(items) {
     div.className = "item";
     const title = document.createElement("div");
     title.className = "title";
-    title.textContent = `${it.label}：${cleanTitle(tab.title)}`;
+    // 同一頁用目前標題 (最新)；否則用偵測當下記下的標題
+    it.name = cleanTitle(it.referer === tab.url ? tab.title : it.title || tab.title);
+    const meta = [fmtDuration(it.duration), it.maxHeight ? `最高 ${it.maxHeight}p` : ""].filter(Boolean).join(" · ");
+    title.textContent = `${it.label}${meta ? `（${meta}）` : ""}：${it.name}`;
     const status = document.createElement("div");
     status.className = "status";
     const btn = document.createElement("button");
@@ -58,7 +79,7 @@ function renderDetected(items) {
         status.textContent = "找不到本機下載服務，請先雙擊 start_server.bat 再試一次。";
         return;
       }
-      await call("/download", "POST", { url: it.url, referer: it.referer, title: cleanTitle(tab.title) });
+      await call("/download", "POST", { url: it.url, referer: it.referer, title: it.name });
       status.textContent = "已加入下載清單，可以關掉這個視窗，下載會繼續。";
       refreshJobs();
     };
