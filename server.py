@@ -2,7 +2,7 @@
 
 啟動: python server.py   (或雙擊 start_server.bat；開機自動啟動用 pythonw)
 只綁定 127.0.0.1；要求自訂 header，避免被其他網頁的跨站請求觸發。
-同時最多下載 MAX_PARALLEL 個，其餘排隊。下載紀錄存在 downloads/jobs.json。
+同時最多下載 MAX_PARALLEL 個，其餘排隊。下載紀錄存在專案資料夾的 jobs.json，成品存到 Windows「下載」資料夾。
 """
 import json
 import os
@@ -19,8 +19,27 @@ import yt_dlp
 
 HOST, PORT = "127.0.0.1", 18765
 MAX_PARALLEL = 2
-OUT_DIR = Path(__file__).parent / "downloads"
-STORE = OUT_DIR / "jobs.json"
+ROOT = Path(__file__).parent
+TMP_DIR = ROOT / ".tmp"          # 下載中的暫存檔 (完成後自動清掉)
+STORE = ROOT / "jobs.json"       # 下載清單紀錄
+
+
+def windows_downloads_dir():
+    """Windows「下載」資料夾 (Chrome 預設下載位置)；取不到就退回 ~/Downloads。"""
+    try:
+        import ctypes
+        from ctypes import wintypes
+        guid = ctypes.c_buffer(16)
+        ctypes.windll.ole32.CLSIDFromString("{374DE290-123F-4565-9164-39C4925E467B}", guid)
+        path = ctypes.c_wchar_p()
+        if ctypes.windll.shell32.SHGetKnownFolderPath(guid, 0, wintypes.HANDLE(0), ctypes.byref(path)) == 0:
+            return Path(path.value)
+    except Exception:  # noqa: BLE001
+        pass
+    return Path.home() / "Downloads"
+
+
+OUT_DIR = windows_downloads_dir()
 JOBS = {}  # id -> {title, url, state, percent, file, error, created}
 LOCK = threading.Lock()
 SLOTS = threading.Semaphore(MAX_PARALLEL)
@@ -60,7 +79,8 @@ def run_job(job_id, url, referer, title):
                     job["percent"] = round(d["downloaded_bytes"] * 100 / total, 1)
 
         opts = {
-            "outtmpl": str(OUT_DIR / f"{safe_title(title)}.%(ext)s"),
+            "paths": {"home": str(OUT_DIR), "temp": str(TMP_DIR)},
+            "outtmpl": f"{safe_title(title)}.%(ext)s",
             "ffmpeg_location": imageio_ffmpeg.get_ffmpeg_exe(),
             "format": "bv*[height<=1080]+ba/b[height<=1080]/b",
             "merge_output_format": "mp4",
@@ -145,6 +165,7 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     OUT_DIR.mkdir(exist_ok=True)
+    TMP_DIR.mkdir(exist_ok=True)
     load_jobs()
     print(f"下載服務已啟動 http://{HOST}:{PORT}  輸出資料夾: {OUT_DIR}\n關閉此視窗即停止。")
     ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()

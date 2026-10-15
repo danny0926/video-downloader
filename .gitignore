@@ -2,3 +2,5 @@
 downloads/
 __pycache__/
 .profile/
+jobs.json
+.tmp/
