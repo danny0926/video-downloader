@@ -1,15 +1,15 @@
 <!doctype html>
 <meta charset="utf-8">
 <style>
-  body { width: 380px; font: 13px system-ui, sans-serif; margin: 0; padding: 12px; }
+  body { width: 340px; font: 13px system-ui, sans-serif; margin: 0; padding: 12px; }
   h1 { font-size: 14px; margin: 0 0 8px; }
   .empty { color: #666; line-height: 1.5; }
-  .item { border-top: 1px solid #ddd; padding: 8px 0; }
-  .url { word-break: break-all; font-size: 11px; color: #444; max-height: 3.6em; overflow: hidden; }
-  .row { display: flex; gap: 6px; margin-top: 6px; align-items: center; }
-  .type { font-size: 11px; color: #888; flex: 1; }
-  button { cursor: pointer; padding: 4px 10px; }
+  .item { border-top: 1px solid #ddd; padding: 10px 0; }
+  .title { font-weight: 600; margin-bottom: 8px; word-break: break-all; }
+  button { cursor: pointer; padding: 6px 18px; background: #1a9e6f; color: #fff; border: 0; border-radius: 4px; font-size: 13px; }
+  button:disabled { background: #999; cursor: default; }
+  .status { margin-top: 6px; font-size: 12px; color: #555; word-break: break-all; }
 </style>
-<h1>偵測到的媒體</h1>
+<h1>偵測到的影片</h1>
 <div id="list"></div>
 <script src="popup.js"></script>

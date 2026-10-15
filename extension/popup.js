@@ -1,49 +1,89 @@
+const SERVER = "http://127.0.0.1:18765";
+const HEADERS = { "X-Media-Sniffer": "1", "Content-Type": "application/json" };
 const listEl = document.getElementById("list");
+let tab;
 
-function fileName(url, type) {
-  let name = decodeURIComponent(new URL(url).pathname.split("/").pop() || "media");
-  if (!name.includes(".")) name += "." + (type.split("/").pop().split(";")[0] || "bin");
-  return name.replace(/[\\/:*?"<>|]/g, "_");
+function cleanTitle(t) {
+  return (t || "video").replace(/\s*[|\-–—]\s*[^|\-–—]*$/, "").trim() || t;
+}
+
+async function serverUp() {
+  try {
+    return (await fetch(SERVER + "/", { headers: HEADERS })).ok;
+  } catch {
+    return false;
+  }
+}
+
+async function jobs() {
+  try {
+    return await (await fetch(SERVER + "/jobs", { headers: HEADERS })).json();
+  } catch {
+    return {};
+  }
+}
+
+function fileName(url) {
+  const n = decodeURIComponent(new URL(url).pathname.split("/").pop() || "media");
+  return n.replace(/[\\/:*?"<>|]/g, "_");
 }
 
 function render(items) {
   listEl.innerHTML = "";
   if (!items.length) {
-    listEl.innerHTML = '<div class="empty">還沒偵測到媒體。<br>請先在頁面按下播放鍵，再回來看這裡。</div>';
+    listEl.innerHTML = '<div class="empty">還沒偵測到影片。<br>請先在頁面按下播放鍵，再回來看這裡。</div>';
     return;
   }
-  for (const it of items.slice().reverse()) {
-    const isStream = /\.(m3u8|mpd)(\?|$)/i.test(it.url) || it.type.includes("mpegurl");
+  for (const it of items) {
     const div = document.createElement("div");
     div.className = "item";
-    div.innerHTML = '<div class="url"></div><div class="row"><span class="type"></span></div>';
-    div.querySelector(".url").textContent = it.url;
-    div.querySelector(".type").textContent = it.type + (isStream ? "（串流，需用 yt-dlp）" : "");
-    const row = div.querySelector(".row");
-
-    const copy = document.createElement("button");
-    copy.textContent = isStream ? "複製 yt-dlp 指令" : "複製網址";
-    copy.onclick = async () => {
-      await navigator.clipboard.writeText(isStream ? `yt-dlp "${it.url}"` : it.url);
-      copy.textContent = "已複製";
-    };
-    row.append(copy);
-
-    if (!isStream) {
-      const dl = document.createElement("button");
-      dl.textContent = "下載";
-      dl.onclick = () => {
-        chrome.downloads.download({ url: it.url, filename: fileName(it.url, it.type), saveAs: true });
-        dl.textContent = "已送出";
-      };
-      row.append(dl);
-    }
+    const title = document.createElement("div");
+    title.className = "title";
+    title.textContent = `${it.label}：${cleanTitle(tab.title)}`;
+    const status = document.createElement("div");
+    status.className = "status";
+    const btn = document.createElement("button");
+    btn.textContent = "下載";
+    div.append(title, btn, status);
     listEl.append(div);
+
+    btn.onclick = async () => {
+      if (it.kind === "file") {
+        chrome.downloads.download({ url: it.url, filename: fileName(it.url), saveAs: true });
+        status.textContent = "已交給 Chrome 下載";
+        return;
+      }
+      if (!(await serverUp())) {
+        status.textContent = "找不到本機下載服務，請先雙擊 start_server.bat 再試一次。";
+        return;
+      }
+      btn.disabled = true;
+      const r = await fetch(SERVER + "/download", {
+        method: "POST",
+        headers: HEADERS,
+        body: JSON.stringify({ url: it.url, referer: it.referer, title: cleanTitle(tab.title) }),
+      });
+      const { id } = await r.json();
+      const timer = setInterval(async () => {
+        const j = (await jobs())[id];
+        if (!j) return;
+        if (j.state === "downloading" || j.state === "queued") status.textContent = `下載中… ${j.percent}%`;
+        if (j.state === "done") {
+          status.textContent = `完成：downloads/${j.file}`;
+          clearInterval(timer);
+        }
+        if (j.state === "error") {
+          status.textContent = "失敗：" + j.error;
+          btn.disabled = false;
+          clearInterval(timer);
+        }
+      }, 1000);
+    };
   }
 }
 
 (async () => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const key = `tab${tab.id}`;
   render((await chrome.storage.session.get(key))[key] || []);
 })();

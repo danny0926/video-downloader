@@ -1,0 +1,105 @@
+"""本機下載服務：Chrome 外掛把網址送來，這裡用 yt-dlp 下載並合併成 mp4。
+
+啟動: python server.py   (或雙擊 start_server.bat)
+只綁定 127.0.0.1；要求自訂 header，避免被其他網頁的跨站請求觸發。
+"""
+import json
+import re
+import threading
+import uuid
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib.parse import urlparse
+
+import imageio_ffmpeg
+import yt_dlp
+
+HOST, PORT = "127.0.0.1", 18765
+OUT_DIR = Path(__file__).parent / "downloads"
+JOBS = {}  # id -> {title, state, percent, file, error}
+
+
+def safe_title(title):
+    title = re.sub(r'[\\/:*?"<>|\r\n]', "_", title or "video").strip()[:120] or "video"
+    return title.replace("%", "%%")  # yt-dlp 輸出樣板裡 % 需跳脫
+
+
+def run_job(job_id, url, referer, title):
+    job = JOBS[job_id]
+
+    def hook(d):
+        if d["status"] == "downloading":
+            total = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
+            if total:
+                job["percent"] = round(d["downloaded_bytes"] * 100 / total, 1)
+        elif d["status"] == "finished":
+            job["percent"] = 100.0
+
+    opts = {
+        "outtmpl": str(OUT_DIR / f"{safe_title(title)}.%(ext)s"),
+        "ffmpeg_location": imageio_ffmpeg.get_ffmpeg_exe(),
+        "format": "bv*[height<=1080]+ba/b[height<=1080]/b",
+        "merge_output_format": "mp4",
+        "noplaylist": True,
+        "windowsfilenames": True,
+        "concurrent_fragment_downloads": 4,
+        "retries": 10,
+        "quiet": True,
+        "noprogress": True,
+        "progress_hooks": [hook],
+        "http_headers": {"Referer": referer} if referer else {},
+    }
+    try:
+        job["state"] = "downloading"
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            job["file"] = Path(ydl.prepare_filename(info)).with_suffix(".mp4").name
+        job["state"] = "done"
+    except Exception as e:  # noqa: BLE001
+        job["state"], job["error"] = "error", str(e)[:300]
+
+
+class Handler(BaseHTTPRequestHandler):
+    def _send(self, code, obj):
+        body = json.dumps(obj, ensure_ascii=False).encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _authorized(self):
+        return self.headers.get("X-Media-Sniffer") == "1"
+
+    def do_GET(self):
+        if not self._authorized():
+            return self._send(403, {"error": "forbidden"})
+        if self.path == "/jobs":
+            return self._send(200, JOBS)
+        self._send(200, {"ok": True})  # 健康檢查
+
+    def do_POST(self):
+        if not self._authorized() or self.path != "/download":
+            return self._send(403, {"error": "forbidden"})
+        try:
+            data = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))))
+            url = data["url"]
+            if urlparse(url).scheme not in ("http", "https"):
+                raise ValueError("bad url")
+        except Exception:  # noqa: BLE001
+            return self._send(400, {"error": "bad request"})
+        job_id = uuid.uuid4().hex[:8]
+        JOBS[job_id] = {"title": data.get("title", ""), "url": url, "state": "queued", "percent": 0.0}
+        threading.Thread(
+            target=run_job, args=(job_id, url, data.get("referer", ""), data.get("title", "")), daemon=True
+        ).start()
+        self._send(200, {"id": job_id})
+
+    def log_message(self, *args):
+        pass
+
+
+if __name__ == "__main__":
+    OUT_DIR.mkdir(exist_ok=True)
+    print(f"下載服務已啟動 http://{HOST}:{PORT}  輸出資料夾: {OUT_DIR}\n關閉此視窗即停止。")
+    ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()
