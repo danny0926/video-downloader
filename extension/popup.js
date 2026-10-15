@@ -47,6 +47,31 @@ function render(items) {
     div.append(title, btn, status);
     listEl.append(div);
 
+    // 追蹤某個下載任務的進度；關掉視窗不影響下載，重開會從這裡接回
+    const watch = (id) => {
+      btn.disabled = true;
+      const tick = async () => {
+        const j = (await jobs())[id];
+        if (!j) return true;
+        if (j.state === "downloading" || j.state === "queued") {
+          status.textContent = `下載中… ${j.percent}%（可以關掉這個視窗，下載會繼續）`;
+          return false;
+        }
+        if (j.state === "done") status.textContent = `完成：downloads/${j.file}`;
+        else {
+          status.textContent = "失敗：" + j.error;
+          btn.disabled = false;
+        }
+        return true;
+      };
+      tick().then((finished) => {
+        if (finished) return;
+        const timer = setInterval(async () => {
+          if (await tick()) clearInterval(timer);
+        }, 1000);
+      });
+    };
+
     btn.onclick = async () => {
       if (it.kind === "file") {
         chrome.downloads.download({ url: it.url, filename: fileName(it.url), saveAs: true });
@@ -63,22 +88,16 @@ function render(items) {
         headers: HEADERS,
         body: JSON.stringify({ url: it.url, referer: it.referer, title: cleanTitle(tab.title) }),
       });
-      const { id } = await r.json();
-      const timer = setInterval(async () => {
-        const j = (await jobs())[id];
-        if (!j) return;
-        if (j.state === "downloading" || j.state === "queued") status.textContent = `下載中… ${j.percent}%`;
-        if (j.state === "done") {
-          status.textContent = `完成：downloads/${j.file}`;
-          clearInterval(timer);
-        }
-        if (j.state === "error") {
-          status.textContent = "失敗：" + j.error;
-          btn.disabled = false;
-          clearInterval(timer);
-        }
-      }, 1000);
+      watch((await r.json()).id);
     };
+
+    // 重開視窗：若這個影片已有下載任務 (進行中/已完成)，直接接回狀態
+    if (it.kind !== "file") {
+      jobs().then((all) => {
+        const mine = Object.entries(all).filter(([, j]) => j.url === it.url && j.state !== "error");
+        if (mine.length) watch(mine[mine.length - 1][0]);
+      });
+    }
   }
 }
 
