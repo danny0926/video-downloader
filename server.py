@@ -82,7 +82,7 @@ def run_job(job_id, url, referer, title):
             "paths": {"home": str(OUT_DIR), "temp": str(TMP_DIR)},
             "outtmpl": f"{safe_title(title)}.%(ext)s",
             "ffmpeg_location": imageio_ffmpeg.get_ffmpeg_exe(),
-            "format": "bv*[height<=1080]+ba/b[height<=1080]/b",
+            "format": "bv*+ba/b",  # 不設解析度上限，永遠選最高畫質
             "merge_output_format": "mp4",
             "noplaylist": True,
             "windowsfilenames": True,
