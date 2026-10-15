@@ -1,25 +1,25 @@
 const SERVER = "http://127.0.0.1:18765";
 const HEADERS = { "X-Media-Sniffer": "1", "Content-Type": "application/json" };
 const listEl = document.getElementById("list");
+const jobsEl = document.getElementById("jobs");
+const STATE_TEXT = { queued: "等待中", downloading: "下載中", done: "已完成", error: "失敗" };
 let tab;
 
 function cleanTitle(t) {
   return (t || "video").replace(/\s*[|\-–—]\s*[^|\-–—]*$/, "").trim() || t;
 }
 
-async function serverUp() {
-  try {
-    return (await fetch(SERVER + "/", { headers: HEADERS })).ok;
-  } catch {
-    return false;
-  }
+async function call(path, method = "GET", body) {
+  const r = await fetch(SERVER + path, { method, headers: HEADERS, body: body && JSON.stringify(body) });
+  return r.json();
 }
 
-async function jobs() {
+async function serverUp() {
   try {
-    return await (await fetch(SERVER + "/jobs", { headers: HEADERS })).json();
+    await call("/");
+    return true;
   } catch {
-    return {};
+    return false;
   }
 }
 
@@ -28,7 +28,8 @@ function fileName(url) {
   return n.replace(/[\\/:*?"<>|]/g, "_");
 }
 
-function render(items) {
+// ── 本頁偵測到的影片 ──────────────────────────────────────────
+function renderDetected(items) {
   listEl.innerHTML = "";
   if (!items.length) {
     listEl.innerHTML = '<div class="empty">還沒偵測到影片。<br>請先在頁面按下播放鍵，再回來看這裡。</div>';
@@ -47,34 +48,6 @@ function render(items) {
     div.append(title, btn, status);
     listEl.append(div);
 
-    // 追蹤某個下載任務的進度；關掉視窗不影響下載，重開會從這裡接回
-    const watch = (id) => {
-      btn.disabled = true;
-      const tick = async () => {
-        const j = (await jobs())[id];
-        if (!j) return true;
-        if (j.state === "downloading" || j.state === "queued") {
-          status.textContent = `下載中… ${j.percent}%（可以關掉這個視窗，下載會繼續）`;
-          return false;
-        }
-        if (j.state === "done") {
-          status.textContent = `完成：downloads/${j.file}`;
-          btn.disabled = false;
-          btn.textContent = "重新下載";
-        } else {
-          status.textContent = "失敗：" + j.error;
-          btn.disabled = false;
-        }
-        return true;
-      };
-      tick().then((finished) => {
-        if (finished) return;
-        const timer = setInterval(async () => {
-          if (await tick()) clearInterval(timer);
-        }, 1000);
-      });
-    };
-
     btn.onclick = async () => {
       if (it.kind === "file") {
         chrome.downloads.download({ url: it.url, filename: fileName(it.url), saveAs: true });
@@ -85,27 +58,55 @@ function render(items) {
         status.textContent = "找不到本機下載服務，請先雙擊 start_server.bat 再試一次。";
         return;
       }
-      btn.disabled = true;
-      const r = await fetch(SERVER + "/download", {
-        method: "POST",
-        headers: HEADERS,
-        body: JSON.stringify({ url: it.url, referer: it.referer, title: cleanTitle(tab.title) }),
-      });
-      watch((await r.json()).id);
+      await call("/download", "POST", { url: it.url, referer: it.referer, title: cleanTitle(tab.title) });
+      status.textContent = "已加入下載清單，可以關掉這個視窗，下載會繼續。";
+      refreshJobs();
     };
-
-    // 重開視窗：若這個影片已有下載任務 (進行中/已完成)，直接接回狀態
-    if (it.kind !== "file") {
-      jobs().then((all) => {
-        const mine = Object.entries(all).filter(([, j]) => j.url === it.url && j.state !== "error");
-        if (mine.length) watch(mine[mine.length - 1][0]);
-      });
-    }
   }
 }
+
+// ── 下載清單 (所有分頁共用，重新整理頁面不會消失) ───────────────────
+async function refreshJobs() {
+  let all;
+  try {
+    all = await call("/jobs");
+  } catch {
+    jobsEl.innerHTML = '<div class="empty">本機下載服務未啟動，請先雙擊 start_server.bat。</div>';
+    return;
+  }
+  const jobs = Object.values(all).sort((a, b) => (b.created || 0) - (a.created || 0));
+  if (!jobs.length) {
+    jobsEl.innerHTML = '<div class="empty">目前沒有下載任務。</div>';
+    return;
+  }
+  jobsEl.innerHTML = "";
+  for (const j of jobs) {
+    const div = document.createElement("div");
+    div.className = "job";
+    const name = document.createElement("div");
+    name.className = "name";
+    name.textContent = j.file || j.title || j.url;
+    const st = document.createElement("div");
+    st.className = `state ${j.state}`;
+    st.textContent =
+      STATE_TEXT[j.state] +
+      (j.state === "downloading" ? ` ${j.percent}%` : "") +
+      (j.state === "error" ? `：${j.error || ""}` : "");
+    div.append(name, st);
+    if (j.state === "downloading") {
+      div.insertAdjacentHTML("beforeend", `<div class="bar"><div style="width:${j.percent}%"></div></div>`);
+    }
+    jobsEl.append(div);
+  }
+}
+
+document.getElementById("open").onclick = () => call("/open", "POST").catch(() => {});
+document.getElementById("clear").onclick = () => call("/clear", "POST").then(refreshJobs).catch(() => {});
 
 (async () => {
   [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const key = `tab${tab.id}`;
-  render((await chrome.storage.session.get(key))[key] || []);
+  renderDetected((await chrome.storage.session.get(key))[key] || []);
+  refreshJobs();
+  setInterval(refreshJobs, 1000);
 })();

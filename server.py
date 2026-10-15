@@ -1,11 +1,14 @@
 """本機下載服務：Chrome 外掛把網址送來，這裡用 yt-dlp 下載並合併成 mp4。
 
-啟動: python server.py   (或雙擊 start_server.bat)
+啟動: python server.py   (或雙擊 start_server.bat；開機自動啟動用 pythonw)
 只綁定 127.0.0.1；要求自訂 header，避免被其他網頁的跨站請求觸發。
+同時最多下載 MAX_PARALLEL 個，其餘排隊。下載紀錄存在 downloads/jobs.json。
 """
 import json
+import os
 import re
 import threading
+import time
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -15,8 +18,31 @@ import imageio_ffmpeg
 import yt_dlp
 
 HOST, PORT = "127.0.0.1", 18765
+MAX_PARALLEL = 2
 OUT_DIR = Path(__file__).parent / "downloads"
-JOBS = {}  # id -> {title, state, percent, file, error}
+STORE = OUT_DIR / "jobs.json"
+JOBS = {}  # id -> {title, url, state, percent, file, error, created}
+LOCK = threading.Lock()
+SLOTS = threading.Semaphore(MAX_PARALLEL)
+
+
+def save_jobs():
+    with LOCK:
+        try:
+            STORE.write_text(json.dumps(JOBS, ensure_ascii=False), encoding="utf-8")
+        except OSError:
+            pass
+
+
+def load_jobs():
+    try:
+        data = json.loads(STORE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return
+    for job in data.values():
+        if job.get("state") in ("queued", "downloading"):  # 上次服務被關掉時沒做完的
+            job["state"], job["error"] = "error", "服務重啟，下載中斷"
+    JOBS.update(data)
 
 
 def safe_title(title):
@@ -26,38 +52,38 @@ def safe_title(title):
 
 def run_job(job_id, url, referer, title):
     job = JOBS[job_id]
+    with SLOTS:  # 超過並行上限的任務停在 queued，等前面的做完
+        def hook(d):
+            if d["status"] == "downloading":
+                total = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
+                if total:
+                    job["percent"] = round(d["downloaded_bytes"] * 100 / total, 1)
 
-    def hook(d):
-        if d["status"] == "downloading":
-            total = d.get("total_bytes") or d.get("total_bytes_estimate") or 0
-            if total:
-                job["percent"] = round(d["downloaded_bytes"] * 100 / total, 1)
-        elif d["status"] == "finished":
-            job["percent"] = 100.0
-
-    opts = {
-        "outtmpl": str(OUT_DIR / f"{safe_title(title)}.%(ext)s"),
-        "ffmpeg_location": imageio_ffmpeg.get_ffmpeg_exe(),
-        "format": "bv*[height<=1080]+ba/b[height<=1080]/b",
-        "merge_output_format": "mp4",
-        "noplaylist": True,
-        "windowsfilenames": True,
-        "concurrent_fragment_downloads": 4,
-        "retries": 10,
-        "overwrites": True,  # 重新下載時覆蓋舊檔，而不是直接跳過
-        "quiet": True,
-        "noprogress": True,
-        "progress_hooks": [hook],
-        "http_headers": {"Referer": referer} if referer else {},
-    }
-    try:
-        job["state"] = "downloading"
-        with yt_dlp.YoutubeDL(opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            job["file"] = Path(ydl.prepare_filename(info)).with_suffix(".mp4").name
-        job["state"] = "done"
-    except Exception as e:  # noqa: BLE001
-        job["state"], job["error"] = "error", str(e)[:300]
+        opts = {
+            "outtmpl": str(OUT_DIR / f"{safe_title(title)}.%(ext)s"),
+            "ffmpeg_location": imageio_ffmpeg.get_ffmpeg_exe(),
+            "format": "bv*[height<=1080]+ba/b[height<=1080]/b",
+            "merge_output_format": "mp4",
+            "noplaylist": True,
+            "windowsfilenames": True,
+            "concurrent_fragment_downloads": 4,
+            "retries": 10,
+            "overwrites": True,  # 重新下載時覆蓋舊檔，而不是直接跳過
+            "quiet": True,
+            "noprogress": True,
+            "progress_hooks": [hook],
+            "http_headers": {"Referer": referer} if referer else {},
+        }
+        try:
+            job["state"] = "downloading"
+            save_jobs()
+            with yt_dlp.YoutubeDL(opts) as ydl:
+                info = ydl.extract_info(url, download=True)
+                job["file"] = Path(ydl.prepare_filename(info)).with_suffix(".mp4").name
+            job["percent"], job["state"] = 100.0, "done"
+        except Exception as e:  # noqa: BLE001
+            job["state"], job["error"] = "error", str(e)[:300]
+        save_jobs()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -80,8 +106,18 @@ class Handler(BaseHTTPRequestHandler):
         self._send(200, {"ok": True})  # 健康檢查
 
     def do_POST(self):
-        if not self._authorized() or self.path != "/download":
+        if not self._authorized():
             return self._send(403, {"error": "forbidden"})
+        if self.path == "/open":  # 開啟下載資料夾
+            os.startfile(OUT_DIR)
+            return self._send(200, {"ok": True})
+        if self.path == "/clear":  # 清除已完成/失敗的紀錄 (不刪影片檔)
+            for k in [k for k, j in JOBS.items() if j["state"] in ("done", "error")]:
+                del JOBS[k]
+            save_jobs()
+            return self._send(200, {"ok": True})
+        if self.path != "/download":
+            return self._send(404, {"error": "not found"})
         try:
             data = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))))
             url = data["url"]
@@ -89,8 +125,15 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError("bad url")
         except Exception:  # noqa: BLE001
             return self._send(400, {"error": "bad request"})
+        for jid, j in JOBS.items():  # 同一個網址已在排隊/下載中就不重複建立
+            if j["url"] == url and j["state"] in ("queued", "downloading"):
+                return self._send(200, {"id": jid})
         job_id = uuid.uuid4().hex[:8]
-        JOBS[job_id] = {"title": data.get("title", ""), "url": url, "state": "queued", "percent": 0.0}
+        JOBS[job_id] = {
+            "title": data.get("title", ""), "url": url, "state": "queued",
+            "percent": 0.0, "created": time.time(),
+        }
+        save_jobs()
         threading.Thread(
             target=run_job, args=(job_id, url, data.get("referer", ""), data.get("title", "")), daemon=True
         ).start()
@@ -102,5 +145,6 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     OUT_DIR.mkdir(exist_ok=True)
+    load_jobs()
     print(f"下載服務已啟動 http://{HOST}:{PORT}  輸出資料夾: {OUT_DIR}\n關閉此視窗即停止。")
     ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()
