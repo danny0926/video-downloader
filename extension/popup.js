@@ -57,8 +57,11 @@ function render(items) {
           status.textContent = `下載中… ${j.percent}%（可以關掉這個視窗，下載會繼續）`;
           return false;
         }
-        if (j.state === "done") status.textContent = `完成：downloads/${j.file}`;
-        else {
+        if (j.state === "done") {
+          status.textContent = `完成：downloads/${j.file}`;
+          btn.disabled = false;
+          btn.textContent = "重新下載";
+        } else {
           status.textContent = "失敗：" + j.error;
           btn.disabled = false;
         }

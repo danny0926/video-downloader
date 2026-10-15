@@ -58,10 +58,10 @@ chrome.webRequest.onResponseStarted.addListener(
 );
 
 // 換頁就清空該分頁的清單
-chrome.tabs.onUpdated.addListener((tabId, info) => {
-  if (info.status === "loading" && info.url) {
-    chrome.storage.session.remove(`tab${tabId}`);
-    chrome.action.setBadgeText({ tabId, text: "" });
-  }
+// 用主框架「提交導航」事件清除：它一定早於該頁 iframe/媒體請求，不會誤刪新頁面剛偵測到的影片
+chrome.webNavigation.onCommitted.addListener((d) => {
+  if (d.frameId !== 0) return;
+  chrome.storage.session.remove(`tab${d.tabId}`);
+  chrome.action.setBadgeText({ tabId: d.tabId, text: "" });
 });
 chrome.tabs.onRemoved.addListener((tabId) => chrome.storage.session.remove(`tab${tabId}`));

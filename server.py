@@ -44,6 +44,7 @@ def run_job(job_id, url, referer, title):
         "windowsfilenames": True,
         "concurrent_fragment_downloads": 4,
         "retries": 10,
+        "overwrites": True,  # 重新下載時覆蓋舊檔，而不是直接跳過
         "quiet": True,
         "noprogress": True,
         "progress_hooks": [hook],
