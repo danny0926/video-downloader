@@ -69,8 +69,30 @@ def safe_title(title):
     return title.replace("%", "%%")  # yt-dlp 輸出樣板裡 % 需跳脫
 
 
-def run_job(job_id, url, referer, title):
+def write_cookie_file(job_id, cookies):
+    """把瀏覽器傳來的 cookie 寫成 Netscape 格式給 yt-dlp 用；只存在 .tmp，下載完即刪。"""
+    lines = ["# Netscape HTTP Cookie File"]
+    for c in cookies:
+        try:
+            dom = c["domain"]
+            lines.append("\t".join([
+                dom, "TRUE" if dom.startswith(".") else "FALSE", c.get("path", "/"),
+                "TRUE" if c.get("secure") else "FALSE", str(int(c.get("expirationDate", 0))),
+                c["name"], c["value"],
+            ]))
+        except (KeyError, TypeError, ValueError):
+            continue
+    if len(lines) == 1:
+        return None
+    TMP_DIR.mkdir(exist_ok=True)
+    path = TMP_DIR / f"cookies-{job_id}.txt"
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
+
+
+def run_job(job_id, url, referer, title, cookies=()):
     job = JOBS[job_id]
+    cookie_file = write_cookie_file(job_id, cookies)
     with SLOTS:  # 超過並行上限的任務停在 queued，等前面的做完
         def hook(d):
             if d["status"] == "downloading":
@@ -94,6 +116,8 @@ def run_job(job_id, url, referer, title):
             "progress_hooks": [hook],
             "http_headers": {"Referer": referer} if referer else {},
         }
+        if cookie_file:
+            opts["cookiefile"] = str(cookie_file)
         try:
             job["state"] = "downloading"
             save_jobs()
@@ -103,6 +127,9 @@ def run_job(job_id, url, referer, title):
             job["percent"], job["state"] = 100.0, "done"
         except Exception as e:  # noqa: BLE001
             job["state"], job["error"] = "error", str(e)[:300]
+        finally:
+            if cookie_file:
+                cookie_file.unlink(missing_ok=True)
         save_jobs()
 
 
@@ -155,7 +182,8 @@ class Handler(BaseHTTPRequestHandler):
         }
         save_jobs()
         threading.Thread(
-            target=run_job, args=(job_id, url, data.get("referer", ""), data.get("title", "")), daemon=True
+            target=run_job, args=(job_id, url, data.get("referer", ""), data.get("title", ""), data.get("cookies") or []),
+            daemon=True,
         ).start()
         self._send(200, {"id": job_id})
 

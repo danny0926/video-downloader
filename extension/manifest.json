@@ -3,7 +3,7 @@
   "name": "Media Sniffer",
   "version": "1.0.0",
   "description": "偵測分頁載入的音訊/影片，播放後可一鍵下載。",
-  "permissions": ["webRequest", "webNavigation", "downloads", "storage", "tabs"],
+  "permissions": ["webRequest", "webNavigation", "downloads", "storage", "tabs", "cookies"],
   "host_permissions": ["<all_urls>"],
   "background": { "service_worker": "background.js" },
   "action": { "default_popup": "popup.html", "default_title": "Media Sniffer" }

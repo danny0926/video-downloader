@@ -79,7 +79,13 @@ function renderDetected(allItems) {
         status.textContent = "找不到本機下載服務，請先雙擊 start_server.bat 再試一次。";
         return;
       }
-      await call("/download", "POST", { url: it.url, referer: it.referer, title: it.name });
+      // 帶上瀏覽器目前的 cookie (只傳給本機服務)：bilibili 等網站會擋沒有 cookie 的請求
+      let cookies = [];
+      try {
+        const urls = [...new Set([it.url, it.referer].filter((u) => /^https?:/.test(u)))];
+        for (const url of urls) cookies.push(...(await chrome.cookies.getAll({ url })));
+      } catch {}
+      await call("/download", "POST", { url: it.url, referer: it.referer, title: it.name, cookies });
       status.textContent = "已加入下載清單，可以關掉這個視窗，下載會繼續。";
       refreshJobs();
     };
