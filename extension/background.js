@@ -80,7 +80,7 @@ chrome.webRequest.onBeforeRequest.addListener(
 );
 
 // bilibili：影片是分段 .m4s (影音分開)，抓不到完整清單，改用「頁面網址」交給 yt-dlp
-const BILI_PAGE = /^https?:\/\/(www\.)?bilibili\.com\/(video\/[A-Za-z0-9]+|bangumi\/play\/\w+)/i;
+const BILI_PAGE = /^https?:\/\/(www\.)?bilibili\.com\/([\w-]+\/)?(video\/[A-Za-z0-9]+|bangumi\/play\/\w+)/i;
 async function detectBilibili(d) {
   if (d.tabId < 0 || !/\.m4s(\?|$)|bilivideo\.com/i.test(d.url)) return false;
   const t = await tabInfo(d.tabId);
@@ -89,8 +89,9 @@ async function detectBilibili(d) {
   // 只保留到 /video/BVxxx (去掉 spm 等追蹤參數；分 P 的 ?p= 保留)
   const u = new URL(t.referer);
   const p = u.searchParams.get("p");
-  const page = `${u.origin}${u.pathname}${p ? `?p=${p}` : ""}`;
-  add(d.tabId, { id: `bilibili:${u.pathname}${p || ""}`, kind: "site", url: page, label: "bilibili 影片", referer: page, title: t.title });
+  const path = u.pathname.replace(/^\/[\w-]+(?=\/(video|bangumi)\/)/, ""); // 去掉語系 (如 /zh-Hans)
+  const page = `${u.origin}${path}${p ? `?p=${p}` : ""}`;
+  add(d.tabId, { id: `bilibili:${path}${p || ""}`, kind: "site", url: page, label: "bilibili 影片", referer: page, title: t.title });
   return true;
 }
 
