@@ -109,6 +109,8 @@ def run_job(job_id, url, referer, title, cookies=()):
             "noplaylist": True,
             "windowsfilenames": True,
             "concurrent_fragment_downloads": 4,
+            # 分段下載 (每段都帶 Range 標頭)：bilibili CDN 對不帶 Range 的請求會回 HTTP 567
+            "http_chunk_size": 10 * 1024 * 1024,
             "retries": 10,
             "overwrites": True,  # 重新下載時覆蓋舊檔，而不是直接跳過
             "quiet": True,
