@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # 在共用 GPU 上「搶佔 → 釋放 → 立刻執行」一條龍。
-# 用法: scripts/gpu_run.sh [-m MIN_FREE_MIB] [-t TIMEOUT_SEC] [-p PYTHON] -- <要執行的指令...>
-# 例:   scripts/gpu_run.sh -p ~/V1/venv/bin/python -- python train.py
+# 用法: scripts/gpu_run.sh [-m MIN_FREE_MIB] [-t TIMEOUT_SEC] [-p PYTHON] <my_code.py> [args...]
+#       scripts/gpu_run.sh [選項] -- <任意指令...>      （非 python 任務用）
+# 例:   scripts/gpu_run.sh my_code.py --epochs 10
+# 預設 python = ~/因子挖掘/.venv/bin/python（該 venv 才有 torch），可用 GPU_PY 或 -p 覆蓋。
 #
 # 流程:
 #   1. nvidia-smi 顯存剩餘 >= MIN_FREE_MIB（預設 20000）→ 直接執行指令。
@@ -11,7 +13,7 @@ set -u
 
 MIN_FREE=${MIN_FREE:-20000}
 TIMEOUT=0
-PY=${GPU_PY:-python3}
+PY=${GPU_PY:-$HOME/因子挖掘/.venv/bin/python}
 while getopts "m:t:p:" o; do
   case $o in
     m) MIN_FREE=$OPTARG ;;
@@ -22,7 +24,9 @@ while getopts "m:t:p:" o; do
 done
 shift $((OPTIND - 1))
 [ "${1:-}" = "--" ] && shift
-[ $# -eq 0 ] && { echo "用法: $0 [-m MiB] [-t sec] [-p python] -- <cmd...>" >&2; exit 2; }
+[ $# -eq 0 ] && { echo "用法: $0 [-m MiB] [-t sec] [-p python] <script.py> [args...]" >&2; exit 2; }
+# 第一個參數是 .py → 自動用 venv python 執行
+case "$1" in *.py) set -- "$PY" "$@" ;; esac
 
 DIR=$(cd "$(dirname "$0")" && pwd)
 free_mib() { nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits | head -n1 | tr -d ' '; }
