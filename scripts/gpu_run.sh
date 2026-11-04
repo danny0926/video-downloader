@@ -7,7 +7,7 @@
 #
 # 流程:
 #   1. nvidia-smi 顯存剩餘 >= MIN_FREE_MIB（預設 20000）→ 直接執行指令。
-#   2. 否則啟動 gpu_grab.py 輪詢；搶到顯存（出現 LOCKED）後立刻 kill，緊接著 exec 指令。
+#   2. 否則啟動 gpu_grab.py 輪詢並持續佔位；累積佔到 >= MIN_FREE 後立刻 kill，緊接著 exec 指令。
 #      若指令啟動後仍 OOM 被別人搶走，可重跑本腳本（會再次輪詢）。
 set -u
 
@@ -46,7 +46,11 @@ GRAB=$!
 trap 'kill -9 $GRAB 2>/dev/null; rm -f "$LOG"' EXIT INT TERM
 
 START=$(date +%s)
-until grep -q '^LOCKED' "$LOG" 2>/dev/null; do
+locked_mib() { grep '^LOCKED' "$LOG" 2>/dev/null | tail -n1 | sed -n 's/.*locked=\([0-9]*\)MiB.*/\1/p'; }
+# 佔位累積量（含他人陸續釋放的）達到 MIN_FREE 才算成功
+while :; do
+  LK=$(locked_mib); LK=${LK:-0}
+  [ "$LK" -ge "$MIN_FREE" ] && break
   if ! kill -0 $GRAB 2>/dev/null; then
     echo "[gpu_run] gpu_grab.py 異常結束（是否缺 torch？用 -p 指定有 torch 的 python）:" >&2
     cat "$LOG" >&2; exit 1
