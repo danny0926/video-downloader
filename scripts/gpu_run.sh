@@ -9,16 +9,19 @@
 #   1. nvidia-smi 顯存剩餘 >= MIN_FREE_MIB（預設 20000）→ 直接執行指令。
 #   2. 否則啟動 gpu_grab.py 輪詢並持續佔位；累積佔到 >= MIN_FREE 後立刻 kill，緊接著 exec 指令。
 #      若指令啟動後仍 OOM 被別人搶走，可重跑本腳本（會再次輪詢）。
+#   3. 任務因 CUDA OOM 失敗（顯存在空窗被別人搶走）→ 自動重新搶佔並重跑，最多 -r 次（預設 100）。
 set -u
 
 MIN_FREE=${MIN_FREE:-20000}
 TIMEOUT=0
+RETRY=100
 PY=${GPU_PY:-$HOME/因子挖掘/.venv/bin/python}
-while getopts "m:t:p:" o; do
+while getopts "m:t:p:r:" o; do
   case $o in
     m) MIN_FREE=$OPTARG ;;
     t) TIMEOUT=$OPTARG ;;
     p) PY=$OPTARG ;;
+    r) RETRY=$OPTARG ;;
     *) exit 2 ;;
   esac
 done
@@ -31,39 +34,46 @@ case "$1" in *.py) set -- "$PY" "$@" ;; esac
 DIR=$(cd "$(dirname "$0")" && pwd)
 free_mib() { nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits | head -n1 | tr -d ' '; }
 
-FREE=$(free_mib)
-if [ "${FREE:-0}" -ge "$MIN_FREE" ]; then
-  echo "[gpu_run] GPU 空閒 ${FREE} MiB，直接執行" >&2
-  exec "$@"
-fi
+attempt() {
+  FREE=$(free_mib)
+  if [ "${FREE:-0}" -ge "$MIN_FREE" ]; then
+    echo "[gpu_run] GPU 空閒 ${FREE} MiB，直接執行" >&2
+  else
+    echo "[gpu_run] GPU 剩餘 ${FREE} MiB < ${MIN_FREE}，啟動搶佔..." >&2
+    GLOG=$(mktemp)
+    "$PY" "$DIR/gpu_grab.py" >"$GLOG" 2>&1 &
+    GRAB=$!
+    START=$(date +%s)
+    while :; do
+      LK=$(grep '^LOCKED' "$GLOG" 2>/dev/null | tail -n1 | sed -n 's/.*locked=\([0-9]*\)MiB.*/\1/p'); LK=${LK:-0}
+      [ "$LK" -ge "$MIN_FREE" ] && break
+      if ! kill -0 $GRAB 2>/dev/null; then
+        echo "[gpu_run] gpu_grab.py 異常結束（是否缺 torch？用 -p 指定有 torch 的 python）:" >&2
+        cat "$GLOG" >&2; rm -f "$GLOG"; exit 1
+      fi
+      if [ "$TIMEOUT" -gt 0 ] && [ $(( $(date +%s) - START )) -ge "$TIMEOUT" ]; then
+        echo "[gpu_run] 等待逾時 ${TIMEOUT}s" >&2; kill -9 $GRAB 2>/dev/null; rm -f "$GLOG"; exit 1
+      fi
+      sleep 0.2
+    done
+    kill -9 $GRAB 2>/dev/null; rm -f "$GLOG"
+    echo "[gpu_run] 已搶到並釋放，立即執行: $*" >&2
+  fi
+  "$@" 2> >(tee "$ELOG" >&2)
+}
 
-echo "[gpu_run] GPU 剩餘 ${FREE} MiB < ${MIN_FREE}，啟動搶佔..." >&2
-nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader >&2
+ELOG=$(mktemp)
+trap 'pkill -9 -P $$ -f gpu_grab.py 2>/dev/null; rm -f "$ELOG"' EXIT
+trap 'exit 130' INT TERM
 
-LOG=$(mktemp)
-"$PY" "$DIR/gpu_grab.py" >"$LOG" 2>&1 &
-GRAB=$!
-trap 'kill -9 $GRAB 2>/dev/null; rm -f "$LOG"' EXIT INT TERM
-
-START=$(date +%s)
-locked_mib() { grep '^LOCKED' "$LOG" 2>/dev/null | tail -n1 | sed -n 's/.*locked=\([0-9]*\)MiB.*/\1/p'; }
-# 佔位累積量（含他人陸續釋放的）達到 MIN_FREE 才算成功
+n=0
 while :; do
-  LK=$(locked_mib); LK=${LK:-0}
-  [ "$LK" -ge "$MIN_FREE" ] && break
-  if ! kill -0 $GRAB 2>/dev/null; then
-    echo "[gpu_run] gpu_grab.py 異常結束（是否缺 torch？用 -p 指定有 torch 的 python）:" >&2
-    cat "$LOG" >&2; exit 1
+  n=$((n + 1))
+  attempt "$@"; RC=$?
+  sleep 0.1  # 讓 tee 寫完
+  if [ $RC -ne 0 ] && grep -qiE 'out of memory|OutOfMemory|cudaErrorMemoryAllocation' "$ELOG" && [ $n -lt "$RETRY" ]; then
+    echo "[gpu_run] 偵測到 CUDA OOM（第 $n/$RETRY 次），重試..." >&2
+    continue
   fi
-  if [ "$TIMEOUT" -gt 0 ] && [ $(( $(date +%s) - START )) -ge "$TIMEOUT" ]; then
-    echo "[gpu_run] 等待逾時 ${TIMEOUT}s" >&2; exit 1
-  fi
-  sleep 0.2
+  exit $RC
 done
-
-# 搶到了：立刻釋放並接著執行（trap 之後不再需要）
-kill -9 $GRAB 2>/dev/null
-trap - EXIT INT TERM
-rm -f "$LOG"
-echo "[gpu_run] 已搶到並釋放，立即執行: $*" >&2
-exec "$@"

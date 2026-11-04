@@ -24,7 +24,7 @@ ssh lab 'cd ~/因子挖掘 && bash scripts/gpu_run.sh my_code.py --epochs 10'
 # 非 python 任務用 --
 ssh lab 'cd ~/因子挖掘 && bash scripts/gpu_run.sh -- bash run.sh'
 
-# 選項: -m 8000 最低空閒顯存 MiB（預設 20000）; -t 3600 最長等待秒數; -p 覆蓋 python
+# 選項: -m 8000 最低空閒顯存 MiB（預設 20000）; -t 3600 最長等待秒數; -r 100 OOM 最多重試次數（預設 100）; -p 覆蓋 python
 ```
 
 手動進 server 時等價於：`cd ~/因子挖掘 && source .venv/bin/activate`。
@@ -39,6 +39,6 @@ ssh lab 'cd ~/因子挖掘 && nohup bash scripts/gpu_run.sh -t 7200 job.py > job
 
 - 這是共用機器：只在 GPU 被占用且確實需要時才用搶佔，並用 `-m` 設合理的最低顯存，不要無謂霸佔。
 - 搶佔腳本需要 torch，因此一律用 `~/因子挖掘/.venv`；不要在其他既有環境裝套件。
-- kill 與指令啟動之間有極短空窗，若任務啟動即 OOM（被別人搶走），直接重跑同一條 `gpu_run.sh` 指令即可。
+- kill 與指令啟動之間有空窗，可能被別人搶走顯存；腳本偵測到任務因 CUDA OOM 失敗會自動重新搶佔並重跑，最多 `-r` 次（預設 100）。
 - 手動停止佔位：`ssh lab 'pkill -f gpu_grab.py'`。
 - 原始腳本備份：`D:\download\triggerOOM.txt`。
